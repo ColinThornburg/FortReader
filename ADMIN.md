@@ -7,16 +7,19 @@ This document provides comprehensive instructions for admin access and managemen
 ### Initial Admin Account Setup
 
 1. **Create Admin Account**:
-   - Use the credentials from `admin-credentials.env` (not committed to git)
-   - Email: `admin@fortreader.com`
-   - Password: `AdminPassword123!`
-   - Username: `admin` (case-sensitive)
-
-2. **First Login**:
    - Go to https://fortreader-97219.web.app
-   - Click "Sign Up" if no account exists
-   - Use the admin credentials above
-   - The system will automatically detect `admin` username and grant admin privileges
+   - Click "Sign Up" to create a new account
+   - **Username MUST be exactly "admin"** (case-sensitive) - this grants admin privileges
+   - Use any email and password you prefer
+   - Example credentials:
+     - Email: `admin@fortreader.com` (or your own email)
+     - Password: `AdminPassword123!` (or your own password)
+     - Username: `admin` (MUST be exactly this)
+
+2. **Admin Privileges**:
+   - The system automatically detects username "admin" and grants admin privileges
+   - You'll see the admin panel button (red shield icon) after login
+   - Admin status is stored in the database as `isAdmin: true`
 
 3. **Change Default Password**:
    - After first login, change the password in Firebase Console
