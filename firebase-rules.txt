@@ -34,6 +34,12 @@ service firebase.storage {
     match /users/{userId}/{allPaths=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+    
+    // Generated skins - anyone can read, only authenticated users can write
+    match /generated-skins/{allPaths=**} {
+      allow read: if true; // Anyone can read images for display
+      allow write: if request.auth != null; // Only authenticated users can upload
+    }
   }
 }
 

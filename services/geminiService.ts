@@ -1,11 +1,26 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { ReadingLevel, ComprehensionQuestion } from '../types';
 import { GEMINI_TEXT_MODEL, GEMINI_IMAGE_MODEL, READING_LEVEL_SETTINGS } from '../constants';
+import { uploadImage } from './firebaseService';
 
 if (!process.env.GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY environment variable is not set");
 }
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+// Helper function to convert base64 to File object
+const base64ToFile = (base64String: string, filename: string): File => {
+  const base64Data = base64String.split(',')[1]; // Remove data:image/png;base64, prefix
+  const byteCharacters = atob(base64Data);
+  const byteNumbers = new Array(byteCharacters.length);
+  
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  
+  const byteArray = new Uint8Array(byteNumbers);
+  return new File([byteArray], filename, { type: 'image/png' });
+};
 
 export const generateStory = async (readingLevel: ReadingLevel, topic: string): Promise<{ title: string, content: string }> => {
   const settings = READING_LEVEL_SETTINGS[readingLevel];
@@ -168,7 +183,20 @@ export const generateSkin = async (prompt: string): Promise<string> => {
     if (response.generatedImages && response.generatedImages.length > 0) {
       const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
       console.log("Successfully generated image via Gemini API");
-      return `data:image/png;base64,${base64ImageBytes}`;
+      
+      // Convert base64 to File and upload to Firebase Storage
+      const timestamp = Date.now();
+      const filename = `generated-skins/${timestamp}-${prompt.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+      const file = base64ToFile(`data:image/png;base64,${base64ImageBytes}`, filename);
+      
+      try {
+        const downloadURL = await uploadImage(file, filename);
+        console.log("Image uploaded to Firebase Storage:", downloadURL);
+        return downloadURL;
+      } catch (uploadError) {
+        console.error("Failed to upload to Firebase Storage, using base64 fallback:", uploadError);
+        return `data:image/png;base64,${base64ImageBytes}`;
+      }
     } else {
       throw new Error("No image was generated.");
     }
