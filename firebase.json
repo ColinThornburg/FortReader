@@ -26,7 +26,7 @@
         "source": "**/*.svg",
         "headers": [
           {
-            "key": "Content-Type", 
+            "key": "Content-Type",
             "value": "image/svg+xml"
           }
         ]
