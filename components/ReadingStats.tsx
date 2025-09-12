@@ -14,9 +14,11 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ user }) => {
   };
 
   const todayMinutes = Math.floor(readingStats.todayValidatedTime / 60);
+  const todaySeconds = readingStats.todayValidatedTime % 60;
   const goalMinutes = readingStats.dailyGoalMinutes;
-  const progressPercentage = Math.min((todayMinutes / goalMinutes) * 100, 100);
-  const isGoalMet = todayMinutes >= goalMinutes;
+  const goalSeconds = goalMinutes * 60;
+  const progressPercentage = Math.min((readingStats.todayValidatedTime / goalSeconds) * 100, 100);
+  const isGoalMet = readingStats.todayValidatedTime >= goalSeconds;
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -39,11 +41,13 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ user }) => {
       
       const session = readingStats.readingSessions.find(s => s.date === dateStr);
       const minutes = session ? Math.floor(session.timeRead / 60) : 0;
+      const seconds = session ? session.timeRead % 60 : 0;
       
       days.push({
         date: dateStr,
         dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
         minutes,
+        seconds,
         isToday: i === 0
       });
     }
@@ -61,7 +65,7 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ user }) => {
         </h3>
         <div className="text-right">
           <div className={`text-lg font-bold ${isGoalMet ? 'text-green-400' : 'text-yellow-400'}`}>
-            {todayMinutes}m / {goalMinutes}m
+            {todayMinutes}m {todaySeconds}s / {goalMinutes}m
           </div>
           {isGoalMet && <div className="text-green-400 text-sm">🎉 Goal Met!</div>}
         </div>
@@ -104,7 +108,7 @@ const ReadingStats: React.FC<ReadingStatsProps> = ({ user }) => {
                 height: `${Math.max(4, (day.minutes / goalMinutes) * 24)}px`,
                 minHeight: '4px'
               }}
-              title={`${day.dayName}: ${day.minutes}m`}
+              title={`${day.dayName}: ${day.minutes}m ${day.seconds}s`}
             ></div>
             <div className={`text-xs ${day.isToday ? 'text-yellow-400 font-bold' : 'text-slate-400'}`}>
               {day.dayName}
