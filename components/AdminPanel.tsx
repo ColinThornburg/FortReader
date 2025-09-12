@@ -3,6 +3,7 @@ import type { AdminSkinData } from '../types';
 import { Rarity } from '../types';
 import Button from './common/Button';
 import * as firebaseService from '../services/firebaseService';
+import UserManagement from './UserManagement';
 
 interface AdminPanelProps {
   onBack: () => void;
@@ -12,6 +13,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   const [adminSkins, setAdminSkins] = useState<AdminSkinData[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingSkin, setEditingSkin] = useState<AdminSkinData | null>(null);
+  const [showUserManagement, setShowUserManagement] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -174,6 +176,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
         <Button onClick={onBack} variant="secondary">Back to Game</Button>
       </div>
 
+      {/* User Management Section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-2xl font-bold text-yellow-300">User Management</h3>
+          <Button 
+            onClick={() => setShowUserManagement(!showUserManagement)} 
+            variant="primary"
+          >
+            {showUserManagement ? 'Hide User Management' : 'Manage Users'}
+          </Button>
+        </div>
+        
+        {showUserManagement && (
+          <UserManagement onBack={() => setShowUserManagement(false)} />
+        )}
+      </div>
+
+      {/* Skin Management Section */}
       <div className="mb-6">
         <Button 
           onClick={() => setShowAddForm(!showAddForm)} 

@@ -177,5 +177,39 @@ export const deleteImage = async (path: string) => {
   }
 };
 
+// Admin functions for user management
+export const getAllUsers = async (): Promise<User[]> => {
+  try {
+    const querySnapshot = await getDocs(collection(db, 'users'));
+    const users: User[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      const userData = doc.data() as User;
+      users.push({
+        ...userData,
+        // Add uid for admin management
+        uid: doc.id
+      } as User & { uid: string });
+    });
+    
+    return users.sort((a, b) => a.username.localeCompare(b.username));
+  } catch (error) {
+    console.error('Error getting all users:', error);
+    return [];
+  }
+};
+
+export const updateUserData = async (uid: string, userData: Partial<User>): Promise<void> => {
+  try {
+    await setDoc(doc(db, 'users', uid), {
+      ...userData,
+      updatedAt: Date.now()
+    }, { merge: true });
+  } catch (error) {
+    console.error('Error updating user data:', error);
+    throw error;
+  }
+};
+
 
 

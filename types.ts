@@ -54,6 +54,7 @@ export interface User {
   equippedSkinId: string;
   totalTimeRead: number; // in seconds - total validated reading time
   isAdmin?: boolean; // Admin flag
+  uid?: string; // Firebase UID for admin management
   skinGenerationData?: {
     lastGenerationTime: number; // timestamp
     generationsToday: number;
