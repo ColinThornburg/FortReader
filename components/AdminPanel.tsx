@@ -13,7 +13,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
   const [adminSkins, setAdminSkins] = useState<AdminSkinData[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingSkin, setEditingSkin] = useState<AdminSkinData | null>(null);
-  const [showUserManagement, setShowUserManagement] = useState(false);
+  const [showUserManagement, setShowUserManagement] = useState(true);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -179,12 +179,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
       {/* User Management Section */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-2xl font-bold text-yellow-300">User Management</h3>
+          <div>
+            <h3 className="text-2xl font-bold text-yellow-300">User Management</h3>
+            <p className="text-slate-300 text-sm">Edit user points, reading time, generations, and daily goals</p>
+          </div>
           <Button 
             onClick={() => setShowUserManagement(!showUserManagement)} 
-            variant="primary"
+            variant="secondary"
           >
-            {showUserManagement ? 'Hide User Management' : 'Manage Users'}
+            {showUserManagement ? 'Hide Users' : 'Show Users'}
           </Button>
         </div>
         
