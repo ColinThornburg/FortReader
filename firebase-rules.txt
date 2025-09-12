@@ -1,0 +1,41 @@
+// Firestore Security Rules for FortReader
+// Copy these rules to Firebase Console > Firestore Database > Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read and write their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Admin skins can be read by anyone, but only written by authenticated users
+    // In a production app, you'd want to restrict writes to admin users only
+    match /adminSkins/{skinId} {
+      allow read: if true; // Anyone can read (for shop display)
+      allow write: if request.auth != null; // Only authenticated users can write
+    }
+  }
+}
+
+// Firebase Storage Rules
+// Copy these rules to Firebase Console > Storage > Rules
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Admin skin images
+    match /admin-skins/{allPaths=**} {
+      allow read: if true; // Anyone can read images for display
+      allow write: if request.auth != null; // Only authenticated users can upload
+    }
+    
+    // User generated content (if needed in the future)
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+
+
+
