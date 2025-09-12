@@ -74,7 +74,9 @@ export const getUserData = async (uid: string): Promise<User | null> => {
     const docSnap = await getDoc(docRef);
     
     if (docSnap.exists()) {
-      return docSnap.data() as User;
+      const userData = docSnap.data() as User;
+      console.log('Loaded user data:', { uid, ownedSkins: userData.ownedSkins?.length || 0 });
+      return userData;
     }
     return null;
   } catch (error) {
@@ -85,10 +87,12 @@ export const getUserData = async (uid: string): Promise<User | null> => {
 
 export const saveUserData = async (uid: string, userData: User) => {
   try {
+    console.log('Saving user data:', { uid, ownedSkins: userData.ownedSkins?.length || 0 });
     await setDoc(doc(db, 'users', uid), {
       ...userData,
       updatedAt: Date.now()
     }, { merge: true });
+    console.log('User data saved successfully');
   } catch (error) {
     console.error('Error saving user data:', error);
     throw error;

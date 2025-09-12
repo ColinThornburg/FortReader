@@ -341,13 +341,28 @@ const App: React.FC = () => {
     setCurrentView('generator');
   };
 
-  const handleBuySkin = (skin: Skin) => {
+  const handleBuySkin = async (skin: Skin) => {
     if (currentUser && currentUser.readingPoints >= skin.cost && !currentUser.ownedSkins.some(s => s.id === skin.id)) {
-      updateUser(user => ({
-        ...user,
-        readingPoints: user.readingPoints - skin.cost,
-        ownedSkins: [...user.ownedSkins, skin],
-      }));
+      const updatedUser = {
+        ...currentUser,
+        readingPoints: currentUser.readingPoints - skin.cost,
+        ownedSkins: [...currentUser.ownedSkins, skin],
+      };
+      
+      // Update local state
+      setCurrentUser(updatedUser);
+      
+      // Explicitly save to Firebase
+      if (firebaseUid) {
+        try {
+          await firebaseService.saveUserData(firebaseUid, updatedUser);
+          console.log('Purchased skin saved to Firebase successfully');
+        } catch (error) {
+          console.error('Error saving purchased skin to Firebase:', error);
+          alert('Error saving skin purchase. Please try again.');
+          return;
+        }
+      }
     }
   };
 
@@ -398,7 +413,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleClaimSkin = () => {
+  const handleClaimSkin = async () => {
     if (!tempSkin || !currentUser || currentUser.readingPoints < SKIN_GENERATION_COST) {
         return;
     }
@@ -412,11 +427,26 @@ const App: React.FC = () => {
         imageUrl: tempSkin.imageUrl,
     };
     
-    updateUser(user => ({
-      ...user,
-      readingPoints: user.readingPoints - SKIN_GENERATION_COST,
-      ownedSkins: [...user.ownedSkins, newSkin],
-    }));
+    const updatedUser = {
+      ...currentUser,
+      readingPoints: currentUser.readingPoints - SKIN_GENERATION_COST,
+      ownedSkins: [...currentUser.ownedSkins, newSkin],
+    };
+    
+    // Update local state
+    setCurrentUser(updatedUser);
+    
+    // Explicitly save to Firebase
+    if (firebaseUid) {
+      try {
+        await firebaseService.saveUserData(firebaseUid, updatedUser);
+        console.log('Skin saved to Firebase successfully');
+      } catch (error) {
+        console.error('Error saving skin to Firebase:', error);
+        alert('Error saving skin. Please try again.');
+        return;
+      }
+    }
 
     setTempSkin(null); 
     alert(`"${newSkin.name}" has been added to your locker!`);
