@@ -19,6 +19,7 @@ Before deploying, ensure you have:
 - Firebase CLI installed (`npm install -g firebase-tools`)
 - Git configured with access to the repository
 - Firebase project access (fortreader-97219)
+- `.env.local` populated with the Firebase keys if you are working outside the default production project. The app now reads `VITE_FIREBASE_*` values, so confirm they are present before asking an agent to run builds.
 
 ## Deployment Process
 
@@ -80,6 +81,8 @@ git commit -m "Implement half-time reading credit for incorrect answers
 - Updated ComprehensionQuestion component messaging
 - Fixed duplicate import issue in App.tsx"
 ```
+
+> **Agent Safety Tip**: Review `services/firebase.ts` before committing. The file should keep the `defaultFirebaseConfig` block intact and only allow overrides through `VITE_FIREBASE_*` variables. Never replace the default keys with placeholders or delete the fallback object—CI and production rely on it.
 
 ### 5. Deploy to Production
 
@@ -145,6 +148,8 @@ The repository includes two GitHub Actions workflows:
 - `firebase.json`: Firebase hosting configuration
 - `.firebaserc`: Project aliases and settings
 - `.github/workflows/`: GitHub Actions workflows
+- `services/firebase.ts`: Initializes Firebase. Verify that `defaultFirebaseConfig` exists and that overrides only pull from `import.meta.env`. When collaborating with LLM agents, remind them to respect this structure so the production keys remain usable.
+- `.env.local`: Local-only overrides. Do **not** commit this file. Supply your own keys here if you test against a personal Firebase project, and share the required variable names (`VITE_FIREBASE_API_KEY`, etc.) with any agent running local builds.
 
 ## Troubleshooting
 
@@ -174,6 +179,7 @@ The repository includes two GitHub Actions workflows:
    # Check current project
    firebase use --list
    ```
+   - If you see `auth/invalid-api-key` after an agent-assisted change, confirm `.env.local` still has valid `VITE_FIREBASE_*` settings and that `services/firebase.ts` retains the `defaultFirebaseConfig` fallback.
 
 4. **GitHub Push Issues**
    ```bash

@@ -1,4 +1,4 @@
-import { ReadingLevel, Rarity } from './types';
+import { ReadingLevel, Rarity, StoryLength } from './types';
 
 export const GEMINI_TEXT_MODEL = 'gemini-2.5-flash';
 export const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image-preview'; // Correct Gemini image model
@@ -54,6 +54,37 @@ export const READING_LEVEL_SETTINGS = {
     pointsPerSecond: 1.2,
     completionBonus: 250,
     description: 'Sophisticated themes and complex language',
+  },
+};
+
+// Story length options control both AI instruction and max validated time per story
+export const STORY_LENGTH_SETTINGS: Record<StoryLength, {
+  label: string;
+  description: string;
+  wordCountMultiplier: number;
+  promptAddition: string;
+  maxTimeSeconds: number;
+}> = {
+  [StoryLength.Short]: {
+    label: 'Short',
+    description: 'Quick tale (~2-3 minutes)',
+    wordCountMultiplier: 0.6,
+    promptAddition: 'Keep the story brisk with 2-3 short paragraphs and a single, clear conflict.',
+    maxTimeSeconds: 240,
+  },
+  [StoryLength.Medium]: {
+    label: 'Medium',
+    description: 'Standard adventure (~5-7 minutes)',
+    wordCountMultiplier: 1,
+    promptAddition: 'Provide a balanced beginning, middle, and end with vivid details.',
+    maxTimeSeconds: 420,
+  },
+  [StoryLength.Long]: {
+    label: 'Long',
+    description: 'Epic quest (~9-12 minutes)',
+    wordCountMultiplier: 1.4,
+    promptAddition: 'Include multiple scenes or challenges and a satisfying resolution.',
+    maxTimeSeconds: 720,
   },
 };
 

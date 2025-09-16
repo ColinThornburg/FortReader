@@ -7,10 +7,11 @@ interface ResultsScreenProps {
   validatedReadingTime: number;
   pointsEarned: number;
   questionCorrect: boolean | null;
+  validationNote?: string | null;
   onReturnHome: () => void;
 }
 
-const ResultsScreen: React.FC<ResultsScreenProps> = ({ rawReadingTime, validatedReadingTime, pointsEarned, questionCorrect, onReturnHome }) => {
+const ResultsScreen: React.FC<ResultsScreenProps> = ({ rawReadingTime, validatedReadingTime, pointsEarned, questionCorrect, validationNote, onReturnHome }) => {
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -36,7 +37,9 @@ const ResultsScreen: React.FC<ResultsScreenProps> = ({ rawReadingTime, validated
         </div>
         {timeDifference > 0 && (
           <div className="bg-yellow-900/20 border border-yellow-500/30 text-yellow-200 text-sm p-3 rounded-lg">
-            Missed question bonus: {formatTime(timeDifference)} did not count this time.
+            {questionCorrect === false
+              ? `Time difference includes the missed-question adjustment: ${formatTime(timeDifference)} did not count this time.`
+              : `Time difference capped at the story limit: ${formatTime(timeDifference)} beyond the cap did not count.`}
           </div>
         )}
         <div className="bg-slate-800/70 p-4 rounded-lg flex justify-between items-center">
@@ -45,9 +48,9 @@ const ResultsScreen: React.FC<ResultsScreenProps> = ({ rawReadingTime, validated
         </div>
       </div>
 
-      {questionCorrect === false && (
+      {validationNote && (
         <p className="text-slate-300 text-sm mb-4">
-          Keep trying! Answering correctly next time will log your full reading time.
+          {validationNote}
         </p>
       )}
 

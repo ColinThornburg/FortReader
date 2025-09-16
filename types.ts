@@ -17,10 +17,18 @@ export enum Rarity {
     Custom = 'Custom',
 }
 
+export enum StoryLength {
+  Short = 'short',
+  Medium = 'medium',
+  Long = 'long',
+}
+
 export interface Story {
   title: string;
   content: string;
   readingLevel: ReadingLevel;
+  length: StoryLength;
+  maxCountedSeconds: number;
 }
 
 export interface ComprehensionQuestion {

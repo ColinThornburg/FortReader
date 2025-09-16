@@ -1,6 +1,6 @@
 import { GoogleGenAI, Modality, Type } from "@google/genai";
-import type { ReadingLevel, ComprehensionQuestion } from '../types';
-import { GEMINI_TEXT_MODEL, GEMINI_IMAGE_MODEL, READING_LEVEL_SETTINGS } from '../constants';
+import type { ReadingLevel, ComprehensionQuestion, StoryLength } from '../types';
+import { GEMINI_TEXT_MODEL, GEMINI_IMAGE_MODEL, READING_LEVEL_SETTINGS, STORY_LENGTH_SETTINGS } from '../constants';
 import { uploadImage } from './firebaseService';
 
 // Gemini API key - injected by Vite build process
@@ -20,12 +20,30 @@ const base64ToFile = (base64String: string, filename: string): File => {
   return new File([byteArray], filename, { type: 'image/png' });
 };
 
-export const generateStory = async (readingLevel: ReadingLevel, topic: string): Promise<{ title: string, content: string }> => {
+const adjustWordCountRange = (range: string, multiplier: number): string => {
+  const [minStr, maxStr] = range.split('-').map(part => part.trim());
+  const min = parseInt(minStr, 10);
+  const max = parseInt(maxStr, 10);
+
+  if (Number.isNaN(min) || Number.isNaN(max)) {
+    return range; // Fallback to original string if parsing fails
+  }
+
+  const adjustedMin = Math.max(50, Math.round(min * multiplier));
+  const adjustedMax = Math.max(adjustedMin + 20, Math.round(max * multiplier));
+  return `${adjustedMin}-${adjustedMax}`;
+};
+
+export const generateStory = async (readingLevel: ReadingLevel, topic: string, length: StoryLength): Promise<{ title: string, content: string }> => {
   const settings = READING_LEVEL_SETTINGS[readingLevel];
+  const lengthSettings = STORY_LENGTH_SETTINGS[length];
+  const adjustedWordRange = adjustWordCountRange(settings.wordCount, lengthSettings.wordCountMultiplier);
   
   const prompt = `Generate a children's story about "${topic}".
-  The story should be between ${settings.wordCount} words.
+  The story should be between ${adjustedWordRange} words.
   ${settings.promptAddition}
+  ${lengthSettings.promptAddition}
+  Make sure the pacing matches a ${lengthSettings.label.toLowerCase()} adventure so it can be read in about ${Math.round(lengthSettings.maxTimeSeconds / 60)} minutes.
   The story must be engaging and exciting for a child.
   Return the story in JSON format.
   `;

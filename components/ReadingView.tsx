@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Story } from '../types';
+import { STORY_LENGTH_SETTINGS } from '../constants';
 import Button from './common/Button';
 
 interface ReadingViewProps {
@@ -45,7 +46,18 @@ const ReadingView: React.FC<ReadingViewProps> = ({ story, onFinish }) => {
           {formatTime(elapsedTime)}
         </div>
       </div>
-      
+
+      <div className="bg-slate-800/60 border border-slate-600 rounded-lg p-4 mb-6 flex flex-col md:flex-row md:items-center md:justify-between text-sm text-slate-300">
+        <div>
+          <span className="font-semibold text-purple-300">Length Selected:</span>{' '}
+          {STORY_LENGTH_SETTINGS[story.length]?.label || 'Medium'} adventure
+        </div>
+        <div className="mt-2 md:mt-0">
+          <span className="font-semibold text-purple-300">Max time counted:</span>{' '}
+          {Math.round(story.maxCountedSeconds / 60)} minute{Math.round(story.maxCountedSeconds / 60) === 1 ? '' : 's'}
+        </div>
+      </div>
+
       <div 
         className="prose prose-invert lg:prose-xl max-w-none text-slate-200 leading-relaxed text-lg"
         dangerouslySetInnerHTML={{ __html: story.content }}
