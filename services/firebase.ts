@@ -10,7 +10,7 @@ const firebaseConfig = {
   projectId: "fortreader-97219",
   storageBucket: "fortreader-97219.firebasestorage.app",
   messagingSenderId: "870904457547",
-  appId: "1:870904457547:web:1188c80e02610e367360ce"
+  appId: "1:870904457547:web:38eddbbdc6feba467360ce"
 };
 
 // Initialize Firebase
