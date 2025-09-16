@@ -67,24 +67,24 @@ export const STORY_LENGTH_SETTINGS: Record<StoryLength, {
 }> = {
   [StoryLength.Short]: {
     label: 'Short',
-    description: 'Quick tale (~2-3 minutes)',
+    description: 'Quick tale (~1-2 minutes)',
     wordCountMultiplier: 0.6,
     promptAddition: 'Keep the story brisk with 2-3 short paragraphs and a single, clear conflict.',
-    maxTimeSeconds: 240,
+    maxTimeSeconds: 120,
   },
   [StoryLength.Medium]: {
     label: 'Medium',
-    description: 'Standard adventure (~5-7 minutes)',
+    description: 'Standard adventure (~3-4 minutes)',
     wordCountMultiplier: 1,
     promptAddition: 'Provide a balanced beginning, middle, and end with vivid details.',
-    maxTimeSeconds: 420,
+    maxTimeSeconds: 240,
   },
   [StoryLength.Long]: {
     label: 'Long',
-    description: 'Epic quest (~9-12 minutes)',
+    description: 'Epic quest (~6-8 minutes)',
     wordCountMultiplier: 1.4,
     promptAddition: 'Include multiple scenes or challenges and a satisfying resolution.',
-    maxTimeSeconds: 720,
+    maxTimeSeconds: 480,
   },
 };
 
