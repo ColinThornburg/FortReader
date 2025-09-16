@@ -3,14 +3,14 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-// Firebase configuration from environment variables
+// Firebase configuration - API keys are safe to be public
 const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY,
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.FIREBASE_APP_ID
+  apiKey: "AIzaSyBPf0T5Y44gisfOePDSudJ72Qwp21y2mHA",
+  authDomain: "fortreader-97219.firebaseapp.com",
+  projectId: "fortreader-97219",
+  storageBucket: "fortreader-97219.firebasestorage.app",
+  messagingSenderId: "870904457547",
+  appId: "1:870904457547:web:1188c80e02610e367360ce"
 };
 
 // Initialize Firebase
