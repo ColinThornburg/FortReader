@@ -1,7 +1,7 @@
 import { ReadingLevel, Rarity } from './types';
 
 export const GEMINI_TEXT_MODEL = 'gemini-2.5-flash';
-export const GEMINI_IMAGE_MODEL = 'imagen-4.0-generate-001'; // Alternative: 'imagen-4.0-generate-preview-06-06'
+export const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image-preview'; // Correct Gemini image model
 
 export const SKIN_GENERATION_COST = 1500;
 
@@ -9,6 +9,7 @@ export const SKIN_GENERATION_COST = 1500;
 export const SKIN_GENERATION_LIMITS = {
   READING_TIME_REQUIRED_SECONDS: 600, // 10 minutes of validated reading time required per generation
   MAX_GENERATIONS_PER_DAY: 10, // Increased since it's based on reading time now
+  COOLDOWN_MINUTES: 0, // No cooldown since it's based on reading time now
 };
 
 export const READING_LEVEL_SETTINGS = {
@@ -17,36 +18,42 @@ export const READING_LEVEL_SETTINGS = {
     promptAddition: 'The story should use simple vocabulary and sentence structure suitable for a 1st grader.',
     pointsPerSecond: 0.7,
     completionBonus: 40,
+    description: 'Simple stories with basic vocabulary',
   },
   [ReadingLevel.Grade2]: {
     wordCount: '200-350',
     promptAddition: 'The story should be engaging for a 2nd grader with a developing vocabulary.',
     pointsPerSecond: 0.8,
     completionBonus: 60,
+    description: 'Engaging stories with developing vocabulary',
   },
   [ReadingLevel.Grade3]: {
     wordCount: '350-500',
     promptAddition: 'The story should use descriptive language and a clear plot suitable for a 3rd grader.',
     pointsPerSecond: 0.9,
     completionBonus: 90,
+    description: 'Descriptive stories with clear plots',
   },
   [ReadingLevel.Grade4]: {
     wordCount: '500-750',
     promptAddition: 'The story should have a more complex plot and vocabulary suitable for a 4th grader.',
     pointsPerSecond: 1.0,
     completionBonus: 125,
+    description: 'Complex plots with advanced vocabulary',
   },
   [ReadingLevel.Grade5]: {
     wordCount: '750-1000',
     promptAddition: 'The story should feature richer vocabulary, character development, and plot twists for a 5th grader.',
     pointsPerSecond: 1.1,
     completionBonus: 175,
+    description: 'Rich vocabulary with character development',
   },
   [ReadingLevel.Grade6]: {
     wordCount: '1000-1500',
     promptAddition: 'The story should be complex, with sophisticated themes and language suitable for a 6th grader preparing for middle school.',
     pointsPerSecond: 1.2,
     completionBonus: 250,
+    description: 'Sophisticated themes and complex language',
   },
 };
 

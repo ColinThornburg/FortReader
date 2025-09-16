@@ -96,6 +96,8 @@ The GitHub Actions workflow will automatically:
 3. Deploy to Firebase Hosting
 4. Update the live webapp at https://fortreader-97219.web.app
 
+**Note**: If automatic deployment fails, use Option B below.
+
 #### Option B: Manual Deployment
 
 ```bash

@@ -16,6 +16,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ onBack }) => {
     readingPoints: 0,
     totalTimeRead: 0,
     generationsToday: 0,
+    totalGenerationsAvailable: 0,
     dailyGoalMinutes: 15
   });
   const [saving, setSaving] = useState(false);
@@ -43,6 +44,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ onBack }) => {
       readingPoints: user.readingPoints,
       totalTimeRead: user.totalTimeRead,
       generationsToday: user.skinGenerationData?.generationsToday || 0,
+      totalGenerationsAvailable: user.skinGenerationData?.totalGenerationsAvailable || 0,
       dailyGoalMinutes: user.readingStats?.dailyGoalMinutes || 15
     });
   };
@@ -60,6 +62,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ onBack }) => {
         skinGenerationData: {
           ...editingUser.skinGenerationData,
           generationsToday: editForm.generationsToday,
+          totalGenerationsAvailable: editForm.totalGenerationsAvailable,
           lastGenerationTime: editingUser.skinGenerationData?.lastGenerationTime || 0,
           dailyResetTime: editingUser.skinGenerationData?.dailyResetTime || Date.now(),
           readingTimeUsedForGeneration: editingUser.skinGenerationData?.readingTimeUsedForGeneration || 0
@@ -117,63 +120,62 @@ const UserManagement: React.FC<UserManagementProps> = ({ onBack }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-4xl font-display text-yellow-300 drop-shadow-md">
-            👥 User Management
-          </h1>
-          <Button onClick={onBack} variant="secondary">
-            ← Back to Admin Panel
-          </Button>
-        </div>
+    <div className="bg-slate-800/50 rounded-lg p-6 border border-slate-600">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-2xl font-bold text-yellow-300">
+          👥 User Management
+        </h3>
+        <Button onClick={onBack} variant="secondary">
+          ← Back to Admin Panel
+        </Button>
+      </div>
 
-        {/* Users List */}
-        <div className="bg-slate-800/50 rounded-lg p-6 border border-purple-500/20">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
+      {/* Users List */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-slate-600">
                   <th className="pb-3 text-yellow-300 font-semibold">Username</th>
                   <th className="pb-3 text-yellow-300 font-semibold">Points</th>
                   <th className="pb-3 text-yellow-300 font-semibold">Total Time</th>
                   <th className="pb-3 text-yellow-300 font-semibold">Generations Today</th>
+                  <th className="pb-3 text-yellow-300 font-semibold">Total Available</th>
                   <th className="pb-3 text-yellow-300 font-semibold">Daily Goal</th>
                   <th className="pb-3 text-yellow-300 font-semibold">Admin</th>
                   <th className="pb-3 text-yellow-300 font-semibold">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user.uid} className="border-b border-slate-700 hover:bg-slate-700/30">
-                    <td className="py-3 text-white font-medium">{user.username}</td>
-                    <td className="py-3 text-yellow-400">{user.readingPoints.toLocaleString()}</td>
-                    <td className="py-3 text-blue-400">{formatTime(user.totalTimeRead)}</td>
-                    <td className="py-3 text-green-400">{user.skinGenerationData?.generationsToday || 0}</td>
-                    <td className="py-3 text-purple-400">{user.readingStats?.dailyGoalMinutes || 15}m</td>
-                    <td className="py-3">
-                      {user.isAdmin ? (
-                        <span className="text-red-400 font-bold">ADMIN</span>
-                      ) : (
-                        <span className="text-slate-400">User</span>
-                      )}
-                    </td>
-                    <td className="py-3">
-                      <Button 
-                        onClick={() => handleEditUser(user)} 
-                        variant="primary" 
-                        size="small"
-                      >
-                        Edit
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.uid} className="border-b border-slate-700 hover:bg-slate-700/30">
+                <td className="py-3 text-white font-medium">{user.username}</td>
+                <td className="py-3 text-yellow-400">{user.readingPoints.toLocaleString()}</td>
+                <td className="py-3 text-blue-400">{formatTime(user.totalTimeRead)}</td>
+                <td className="py-3 text-green-400">{user.skinGenerationData?.generationsToday || 0}</td>
+                <td className="py-3 text-orange-400">{user.skinGenerationData?.totalGenerationsAvailable || 0}</td>
+                <td className="py-3 text-purple-400">{user.readingStats?.dailyGoalMinutes || 15}m</td>
+                <td className="py-3">
+                  {user.isAdmin ? (
+                    <span className="text-red-400 font-bold">ADMIN</span>
+                  ) : (
+                    <span className="text-slate-400">User</span>
+                  )}
+                </td>
+                <td className="py-3">
+                  <Button 
+                    onClick={() => handleEditUser(user)} 
+                    variant="primary" 
+                    size="small"
+                  >
+                    Edit
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
         {/* Edit Modal */}
         {editingUser && (
@@ -225,6 +227,21 @@ const UserManagement: React.FC<UserManagementProps> = ({ onBack }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">
+                    Total Generations Available
+                  </label>
+                  <input
+                    type="number"
+                    value={editForm.totalGenerationsAvailable}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, totalGenerationsAvailable: parseInt(e.target.value) || 0 }))}
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">
+                    Total number of skin generations this user can perform
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">
                     Daily Goal (minutes)
                   </label>
                   <input
@@ -256,7 +273,6 @@ const UserManagement: React.FC<UserManagementProps> = ({ onBack }) => {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 };

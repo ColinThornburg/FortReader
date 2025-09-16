@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Modality, Type } from "@google/genai";
 import type { ReadingLevel, ComprehensionQuestion } from '../types';
 import { GEMINI_TEXT_MODEL, GEMINI_IMAGE_MODEL, READING_LEVEL_SETTINGS } from '../constants';
 import { uploadImage } from './firebaseService';
@@ -162,44 +162,41 @@ Return the question in JSON format.`;
 export const generateSkin = async (prompt: string): Promise<string> => {
   try {
     console.log("Attempting to generate image with prompt:", prompt);
+    console.log("Using model:", GEMINI_IMAGE_MODEL);
     
-    const response = await ai.models.generateImages({
+    // Use the correct Google AI SDK method for image generation
+    const response = await ai.models.generateContent({
       model: GEMINI_IMAGE_MODEL,
-      prompt: prompt,
-      config: {
-        numberOfImages: 1,
-        outputMimeType: 'image/png',
-        aspectRatio: '1:1',
-        // Add safety settings to avoid content policy issues
-        safetySettings: [
-          {
-            category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-            threshold: 'BLOCK_ONLY_HIGH'
-          }
-        ]
-      },
+      contents: prompt,
     });
 
-    if (response.generatedImages && response.generatedImages.length > 0) {
-      const base64ImageBytes: string = response.generatedImages[0].image.imageBytes;
-      console.log("Successfully generated image via Gemini API");
-      
-      // Convert base64 to File and upload to Firebase Storage
-      const timestamp = Date.now();
-      const filename = `generated-skins/${timestamp}-${prompt.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_')}.png`;
-      const file = base64ToFile(`data:image/png;base64,${base64ImageBytes}`, filename);
-      
-      try {
-        const downloadURL = await uploadImage(file, filename);
-        console.log("Image uploaded to Firebase Storage:", downloadURL);
-        return downloadURL;
-      } catch (uploadError) {
-        console.error("Failed to upload to Firebase Storage, using base64 fallback:", uploadError);
-        return `data:image/png;base64,${base64ImageBytes}`;
+    console.log("API Response:", JSON.stringify(response, null, 2));
+
+    // Check if we got image data in the response
+    if (response.candidates && response.candidates[0] && response.candidates[0].content && response.candidates[0].content.parts) {
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+          const imageData = part.inlineData.data;
+          console.log("Successfully generated image via Gemini API");
+          
+          // Convert base64 to File and upload to Firebase Storage
+          const timestamp = Date.now();
+          const filename = `generated-skins/${timestamp}-${prompt.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+          const file = base64ToFile(`data:image/png;base64,${imageData}`, filename);
+          
+          try {
+            const downloadURL = await uploadImage(file, filename);
+            console.log("Image uploaded to Firebase Storage:", downloadURL);
+            return downloadURL;
+          } catch (uploadError) {
+            console.error("Failed to upload to Firebase Storage, using base64 fallback:", uploadError);
+            return `data:image/png;base64,${imageData}`;
+          }
+        }
       }
-    } else {
-      throw new Error("No image was generated.");
     }
+    
+    throw new Error("No image was generated.");
   } catch (error) {
     console.error("Error generating skin image:", error);
     

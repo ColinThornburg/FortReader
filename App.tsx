@@ -25,6 +25,9 @@ const App: React.FC = () => {
   const [currentStory, setCurrentStory] = useState<Story | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<ComprehensionQuestion | null>(null);
   const [readingTime, setReadingTime] = useState<number>(0);
+  const [validatedReadingTime, setValidatedReadingTime] = useState<number>(0);
+  const [lastPointsEarned, setLastPointsEarned] = useState<number>(0);
+  const [lastQuestionCorrect, setLastQuestionCorrect] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [loadingMessage, setLoadingMessage] = useState<string>('Summoning skins...');
@@ -133,13 +136,23 @@ const App: React.FC = () => {
       lastGenerationTime: 0,
       generationsToday: 0,
       dailyResetTime: Date.now(),
-      readingTimeUsedForGeneration: 0
+      readingTimeUsedForGeneration: 0,
+      totalGenerationsAvailable: 0
     };
     
     // Check if we need to reset daily counter
     const lastResetDate = new Date(skinGenData.dailyResetTime).toDateString();
     const isNewDay = today !== lastResetDate;
     const currentGenerationsToday = isNewDay ? 0 : skinGenData.generationsToday;
+    
+    // Check total available generations limit (admin-controlled)
+    if (skinGenData.totalGenerationsAvailable <= 0) {
+      return { 
+        canGenerate: false, 
+        reason: `No generations available. Contact admin to add more.`,
+        availableGenerations: 0
+      };
+    }
     
     // Check daily limit
     if (currentGenerationsToday >= SKIN_GENERATION_LIMITS.MAX_GENERATIONS_PER_DAY) {
@@ -155,28 +168,39 @@ const App: React.FC = () => {
     const timeUsedForGeneration = isNewDay ? 0 : (skinGenData.readingTimeUsedForGeneration || 0);
     const availableReadingTime = totalValidatedTime - timeUsedForGeneration;
     const requiredTime = SKIN_GENERATION_LIMITS.READING_TIME_REQUIRED_SECONDS;
+    const normalizedAvailableReading = Math.max(0, availableReadingTime);
+    const readingTimeNeeded = normalizedAvailableReading >= requiredTime 
+      ? 0 
+      : requiredTime - normalizedAvailableReading;
     
-    // Check if user has enough reading time
-    if (availableReadingTime < requiredTime) {
-      const timeNeeded = requiredTime - availableReadingTime;
-      const minutesNeeded = Math.ceil(timeNeeded / 60);
-      return { 
-        canGenerate: false, 
-        reason: `Need ${minutesNeeded} more minutes of validated reading time`,
-        readingTimeNeeded: timeNeeded,
-        availableGenerations: 0
-      };
-    }
-    
-    // Calculate how many generations they can afford based on reading time
-    const possibleGenerations = Math.floor(availableReadingTime / requiredTime);
+    // Calculate available generations
+    const totalAvailable = skinGenData.totalGenerationsAvailable;
     const remainingDailyGenerations = SKIN_GENERATION_LIMITS.MAX_GENERATIONS_PER_DAY - currentGenerationsToday;
-    const availableGenerations = Math.min(possibleGenerations, remainingDailyGenerations);
+    
+    // If admin has given generations, allow them to use those generations
+    // regardless of reading time (admin override)
+    let availableGenerations = Math.min(remainingDailyGenerations, totalAvailable);
+    
+    // Only check reading time if they don't have admin-given generations
+    // or if they want to use more generations than admin gave them
+    if (availableGenerations > 0 && normalizedAvailableReading < requiredTime) {
+      const possibleGenerations = Math.floor(normalizedAvailableReading / requiredTime);
+      
+      // If they have admin-given generations, they can use those
+      // But if they want more than admin gave, they need reading time
+      if (possibleGenerations === 0 && totalAvailable > 0) {
+        // Admin gave them generations, let them use at least 1
+        availableGenerations = Math.min(1, totalAvailable, remainingDailyGenerations);
+      } else {
+        availableGenerations = Math.min(availableGenerations, possibleGenerations);
+      }
+    }
     
     return { 
       canGenerate: availableGenerations > 0, 
       availableGenerations,
-      reason: availableGenerations === 0 ? 'No generations available' : undefined
+      reason: availableGenerations === 0 ? 'No generations available' : undefined,
+      readingTimeNeeded: availableGenerations > 0 ? 0 : Math.ceil(readingTimeNeeded)
     };
   };
 
@@ -189,7 +213,13 @@ const App: React.FC = () => {
     
     // Calculate new reading time used (add the required time for this generation)
     const currentTimeUsed = isNewDay ? 0 : (currentData?.readingTimeUsedForGeneration || 0);
-    const newTimeUsed = currentTimeUsed + SKIN_GENERATION_LIMITS.READING_TIME_REQUIRED_SECONDS;
+    
+    // Check if user has admin-given generations
+    const hasAdminGenerations = (currentData?.totalGenerationsAvailable || 0) > 0;
+    
+    // Only deduct reading time if they don't have admin-given generations
+    // or if they're using more generations than admin gave them
+    const newTimeUsed = hasAdminGenerations ? currentTimeUsed : currentTimeUsed + SKIN_GENERATION_LIMITS.READING_TIME_REQUIRED_SECONDS;
     
     return {
       ...user,
@@ -197,7 +227,8 @@ const App: React.FC = () => {
         lastGenerationTime: now,
         generationsToday: isNewDay ? 1 : (currentData?.generationsToday || 0) + 1,
         dailyResetTime: isNewDay ? now : (currentData?.dailyResetTime || now),
-        readingTimeUsedForGeneration: newTimeUsed
+        readingTimeUsedForGeneration: newTimeUsed,
+        totalGenerationsAvailable: Math.max(0, (currentData?.totalGenerationsAvailable || 0) - 1)
       }
     };
   };
@@ -241,6 +272,13 @@ const App: React.FC = () => {
 
   const handleFinishReading = async (time: number) => {
     setReadingTime(time);
+    setValidatedReadingTime(0);
+    setLastPointsEarned(0);
+    setLastQuestionCorrect(null);
+    console.info('Finished reading story', {
+      storyTitle: currentStory?.title,
+      rawTimeSeconds: time
+    });
     setIsLoading(true);
     setLoadingMessage('Preparing your question...');
     
@@ -259,13 +297,22 @@ const App: React.FC = () => {
 
   const handleQuestionAnswered = (correct: boolean) => {
     const levelSetting = READING_LEVEL_SETTINGS[currentStory!.readingLevel];
-    let pointsEarned = Math.round(readingTime * levelSetting.pointsPerSecond) + levelSetting.completionBonus;
-    
+    const validatedTime = correct ? readingTime : Math.floor(readingTime / 2);
+    let pointsEarned = Math.round(validatedTime * levelSetting.pointsPerSecond) + levelSetting.completionBonus;
+
     // Give a small bonus for correct answers
     if (correct) {
       pointsEarned += Math.round(levelSetting.completionBonus * 0.1);
     }
-    
+
+    console.info('Comprehension question answered', {
+      storyTitle: currentStory?.title,
+      correct,
+      rawReadingTimeSeconds: readingTime,
+      validatedTimeSeconds: validatedTime,
+      pointsEarned
+    });
+
     updateUser(user => {
       const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
       const isNewDay = !user.readingStats?.lastReadingDate || user.readingStats.lastReadingDate !== today;
@@ -277,18 +324,21 @@ const App: React.FC = () => {
         lastReadingDate: today,
         readingSessions: []
       };
+
+      const baseTotalTime = user.totalTimeRead || 0;
+      const existingSessions = currentStats.readingSessions || [];
       
       // Reset daily time if it's a new day
       const todayValidatedTime = isNewDay ? 0 : currentStats.todayValidatedTime;
       
       // Add full reading time for correct answers, half for incorrect answers
-      const timeToAdd = correct ? readingTime : Math.floor(readingTime / 2);
+      const timeToAdd = validatedTime;
       const newValidatedTime = todayValidatedTime + timeToAdd;
-      const newTotalTime = user.totalTimeRead + timeToAdd;
+      const newTotalTime = baseTotalTime + timeToAdd;
       
       // Update or create today's reading session
-      const existingSessionIndex = currentStats.readingSessions.findIndex(session => session.date === today);
-      const updatedSessions = [...currentStats.readingSessions];
+      const existingSessionIndex = existingSessions.findIndex(session => session.date === today);
+      const updatedSessions = [...existingSessions];
       
       if (existingSessionIndex >= 0) {
         // Update existing session
@@ -317,8 +367,8 @@ const App: React.FC = () => {
       const filteredSessions = updatedSessions.filter(session => 
         new Date(session.date) >= thirtyDaysAgo
       );
-      
-      return {
+
+      const updatedUser = {
         ...user,
         readingPoints: user.readingPoints + pointsEarned,
         totalTimeRead: newTotalTime,
@@ -329,8 +379,22 @@ const App: React.FC = () => {
           readingSessions: filteredSessions
         }
       };
+
+      console.info('Updated reading totals', {
+        username: user.username,
+        timeAddedSeconds: timeToAdd,
+        todayValidatedTimeSeconds: newValidatedTime,
+        totalValidatedTimeSeconds: newTotalTime,
+        pointsEarned,
+        streakSessionsTracked: filteredSessions.length
+      });
+
+      return updatedUser;
     });
 
+    setValidatedReadingTime(validatedTime);
+    setLastPointsEarned(pointsEarned);
+    setLastQuestionCorrect(correct);
     setCurrentView('results');
   };
 
@@ -338,6 +402,9 @@ const App: React.FC = () => {
     setCurrentStory(null);
     setCurrentQuestion(null);
     setReadingTime(0);
+    setValidatedReadingTime(0);
+    setLastPointsEarned(0);
+    setLastQuestionCorrect(null);
     setCurrentView('generator');
   };
 
@@ -378,8 +445,9 @@ const App: React.FC = () => {
     const limitCheck = checkSkinGenerationLimits(currentUser);
     if (!limitCheck.canGenerate) {
       let errorMessage = "🚫 " + limitCheck.reason;
-      if (limitCheck.cooldownMinutes) {
-        errorMessage += `. Try again in ${limitCheck.cooldownMinutes} minutes.`;
+      if (limitCheck.readingTimeNeeded && limitCheck.readingTimeNeeded > 0) {
+        const minutesNeeded = Math.ceil(limitCheck.readingTimeNeeded / 60);
+        errorMessage += `. You need ${minutesNeeded} more minutes of reading time.`;
       } else {
         errorMessage += ". Come back tomorrow for more generations!";
       }
@@ -430,7 +498,7 @@ const App: React.FC = () => {
     const updatedUser = {
       ...currentUser,
       readingPoints: currentUser.readingPoints - SKIN_GENERATION_COST,
-      ownedSkins: [...currentUser.ownedSkins, newSkin],
+      ownedSkins: [...currentUser.ownedSkins, newSkin]
     };
     
     // Update local state
@@ -528,9 +596,15 @@ const App: React.FC = () => {
           onAnswer={handleQuestionAnswered} 
         />;
       case 'results':
-        const levelSetting = READING_LEVEL_SETTINGS[currentStory!.readingLevel];
-        const pointsEarned = Math.round(readingTime * levelSetting.pointsPerSecond) + levelSetting.completionBonus;
-        return <ResultsScreen readingTime={readingTime} pointsEarned={pointsEarned} onReturnHome={handleReturnHome} />;
+        return (
+          <ResultsScreen 
+            rawReadingTime={readingTime}
+            validatedReadingTime={validatedReadingTime}
+            pointsEarned={lastPointsEarned}
+            questionCorrect={lastQuestionCorrect}
+            onReturnHome={handleReturnHome}
+          />
+        );
       case 'shop':
         const shopSkins = availableSkins.filter(s => {
           const isOwned = currentUser.ownedSkins.some(os => os.id === s.id);

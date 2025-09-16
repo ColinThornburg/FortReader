@@ -60,6 +60,7 @@ export interface User {
     generationsToday: number;
     dailyResetTime: number; // timestamp of last daily reset
     readingTimeUsedForGeneration: number; // total reading time (in seconds) that has been "spent" on skin generation
+    totalGenerationsAvailable: number; // total generations available to the user
   };
   readingStats?: {
     dailyGoalMinutes: number; // daily reading goal in minutes (default 15)
