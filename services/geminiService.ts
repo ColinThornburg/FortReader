@@ -3,9 +3,8 @@ import type { ReadingLevel, ComprehensionQuestion } from '../types';
 import { GEMINI_TEXT_MODEL, GEMINI_IMAGE_MODEL, READING_LEVEL_SETTINGS } from '../constants';
 import { uploadImage } from './firebaseService';
 
-// Gemini API key - in production this should be set via environment variables
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyB57hvabkTJ86itAQjwW6SlIIZtEDvwG1g";
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+// Gemini API key - injected by Vite build process
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Helper function to convert base64 to File object
 const base64ToFile = (base64String: string, filename: string): File => {
