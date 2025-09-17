@@ -29,6 +29,11 @@ export interface Story {
   readingLevel: ReadingLevel;
   length: StoryLength;
   maxCountedSeconds: number;
+  readingLevelCheck?: {
+    claimedLevel: string;
+    confidence: number;
+    notes?: string;
+  } | null;
 }
 
 export interface ComprehensionQuestion {

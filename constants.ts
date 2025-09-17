@@ -19,6 +19,7 @@ export const READING_LEVEL_SETTINGS = {
     pointsPerSecond: 0.7,
     completionBonus: 40,
     description: 'Simple stories with basic vocabulary',
+    exemplar: 'Lila the ladybug loved sunny mornings. She found a shiny pebble and shared it with her best friend.',
   },
   [ReadingLevel.Grade2]: {
     wordCount: '200-350',
@@ -26,6 +27,7 @@ export const READING_LEVEL_SETTINGS = {
     pointsPerSecond: 0.8,
     completionBonus: 60,
     description: 'Engaging stories with developing vocabulary',
+    exemplar: 'Milo the squirrel packed three sweet acorns for show-and-tell and learned that bravery starts with a small step.',
   },
   [ReadingLevel.Grade3]: {
     wordCount: '350-500',
@@ -33,6 +35,7 @@ export const READING_LEVEL_SETTINGS = {
     pointsPerSecond: 0.9,
     completionBonus: 90,
     description: 'Descriptive stories with clear plots',
+    exemplar: 'Jada mapped the secret trail through Willow Woods, describing the rustling leaves and clever raccoons she met along the way.',
   },
   [ReadingLevel.Grade4]: {
     wordCount: '500-750',
@@ -40,6 +43,7 @@ export const READING_LEVEL_SETTINGS = {
     pointsPerSecond: 1.0,
     completionBonus: 125,
     description: 'Complex plots with advanced vocabulary',
+    exemplar: 'Diego engineered a kite with recycled parts and discovered teamwork when the neighborhood kids helped him chase the perfect gust.',
   },
   [ReadingLevel.Grade5]: {
     wordCount: '750-1000',
@@ -47,6 +51,7 @@ export const READING_LEVEL_SETTINGS = {
     pointsPerSecond: 1.1,
     completionBonus: 175,
     description: 'Rich vocabulary with character development',
+    exemplar: 'Priya decoded an ancient library puzzle, weaving vivid metaphors about courage while honoring history and culture.',
   },
   [ReadingLevel.Grade6]: {
     wordCount: '1000-1500',
@@ -54,8 +59,12 @@ export const READING_LEVEL_SETTINGS = {
     pointsPerSecond: 1.2,
     completionBonus: 250,
     description: 'Sophisticated themes and complex language',
+    exemplar: 'Elias negotiated a truce between rival inventors, blending precise technical language with reflections on empathy and responsibility.',
   },
 };
+
+export const STORY_TONE_WORDS = ['encouraging', 'curious', 'kind', 'hopeful', 'playful'];
+export const STORY_DISALLOWED_TOPICS = ['violence', 'romance', 'dating', 'harm', 'weapons', 'frightening scenes'];
 
 // Story length options control both AI instruction and max validated time per story
 export const STORY_LENGTH_SETTINGS: Record<StoryLength, {

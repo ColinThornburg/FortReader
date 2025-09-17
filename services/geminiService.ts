@@ -1,6 +1,6 @@
 import { GoogleGenAI, Modality, Type } from "@google/genai";
 import type { ReadingLevel, ComprehensionQuestion, StoryLength } from '../types';
-import { GEMINI_TEXT_MODEL, GEMINI_IMAGE_MODEL, READING_LEVEL_SETTINGS, STORY_LENGTH_SETTINGS } from '../constants';
+import { GEMINI_TEXT_MODEL, GEMINI_IMAGE_MODEL, READING_LEVEL_SETTINGS, STORY_LENGTH_SETTINGS, STORY_TONE_WORDS, STORY_DISALLOWED_TOPICS } from '../constants';
 import { uploadImage } from './firebaseService';
 
 // Gemini API key - injected by Vite build process
@@ -34,10 +34,12 @@ const adjustWordCountRange = (range: string, multiplier: number): string => {
   return `${adjustedMin}-${adjustedMax}`;
 };
 
-export const generateStory = async (readingLevel: ReadingLevel, topic: string, length: StoryLength): Promise<{ title: string, content: string }> => {
+export const generateStory = async (readingLevel: ReadingLevel, topic: string, length: StoryLength): Promise<{ title: string, content: string, readingLevelCheck?: { claimedLevel: string; confidence: number; notes?: string } | null }> => {
   const settings = READING_LEVEL_SETTINGS[readingLevel];
   const lengthSettings = STORY_LENGTH_SETTINGS[length];
   const adjustedWordRange = adjustWordCountRange(settings.wordCount, lengthSettings.wordCountMultiplier);
+  const toneWordsList = STORY_TONE_WORDS.join(', ');
+  const disallowedTopicsList = STORY_DISALLOWED_TOPICS.join(', ');
   
   const prompt = `Generate a children's story about "${topic}".
   The story should be between ${adjustedWordRange} words.
@@ -45,7 +47,24 @@ export const generateStory = async (readingLevel: ReadingLevel, topic: string, l
   ${lengthSettings.promptAddition}
   Make sure the pacing matches a ${lengthSettings.label.toLowerCase()} adventure so it can be read in about ${Math.round(lengthSettings.maxTimeSeconds / 60)} minutes.
   The story must be engaging and exciting for a child.
-  Return the story in JSON format.
+  Use only vocabulary appropriate for ${readingLevel} readers; keep sentences under 15 words for ${readingLevel}.
+  Maintain a tone that feels ${toneWordsList}.
+  Avoid topics, scenes, or words involving ${disallowedTopicsList}.
+  Structure the story in exactly three paragraphs:
+    1. Introduce the setting and main character in clear, simple language.
+    2. Present a gentle challenge or mystery that encourages perseverance.
+    3. Resolve the challenge with a positive lesson highlighting kindness or curiosity.
+  Optionally echo this exemplar style: ${settings.exemplar}
+  Return JSON with the following structure:
+  {
+    "title": string,
+    "content": string (paragraphs separated by double newlines),
+    "readingLevelCheck": {
+      "claimedLevel": string describing the estimated grade range,
+      "confidence": number between 0 and 1,
+      "notes": string summarising vocabulary or sentence-length choices
+    }
+  }
   `;
 
   try {
@@ -64,10 +83,21 @@ export const generateStory = async (readingLevel: ReadingLevel, topic: string, l
             content: {
               type: Type.STRING,
               description: 'The full content of the story, formatted with paragraphs separated by newlines.'
+            },
+            readingLevelCheck: {
+              type: Type.OBJECT,
+              properties: {
+                claimedLevel: { type: Type.STRING },
+                confidence: { type: Type.NUMBER },
+                notes: { type: Type.STRING },
+              }
             }
           },
-          required: ["title", "content"]
-        }
+          required: ["title", "content"],
+        },
+        temperature: 0.6,
+        topK: 40,
+        topP: 0.8,
       }
     });
 

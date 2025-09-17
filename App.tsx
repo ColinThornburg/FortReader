@@ -251,10 +251,18 @@ const App: React.FC = () => {
     setLoadingMessage('Crafting a new adventure...');
     setError(null);
     try {
-      const { title, content } = await generateStory(readingLevel, topic, length);
+      const { title, content, readingLevelCheck } = await generateStory(readingLevel, topic, length);
       const lengthConfig = STORY_LENGTH_SETTINGS[length];
-      setCurrentStory({ title, content, readingLevel, length, maxCountedSeconds: lengthConfig.maxTimeSeconds });
+      setCurrentStory({ title, content, readingLevel, length, maxCountedSeconds: lengthConfig.maxTimeSeconds, readingLevelCheck });
       setCurrentView('reading');
+      if (readingLevelCheck) {
+        console.info('Story readability check', {
+          requestedLevel: readingLevel,
+          modelClaimedLevel: readingLevelCheck.claimedLevel,
+          confidence: readingLevelCheck.confidence,
+          notes: readingLevelCheck.notes,
+        });
+      }
     } catch (err) {
       console.error("Failed to generate story:", err);
       setError("The storybook is stuck! Couldn't generate a tale. Please try again.");
